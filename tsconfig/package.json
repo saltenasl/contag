@@ -1,0 +1,17 @@
+{
+  "name": "@contag/tsconfig",
+  "sideEffects": false,
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "prettier": "bash -c 'prettier --check --ignore-unknown --ignore-path=<(cat ../.prettierignore) \"**/*\"'"
+  },
+  "author": "",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@tsconfig/node-lts-strictest": "^18.12.1"
+  },
+  "lint-staged": {
+    "**/*": "prettier --write --ignore-unknown"
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "name": "@contag/ui",
+  "sideEffects": [
+    "*.css"
+  ],
+  "private": true,
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "lint:base": "eslint",
+    "lint": "pnpm run lint:base . --ext .ts,.tsx,.js",
+    "prettier": "bash -c 'prettier --check --ignore-unknown --ignore-path=<(cat ../.prettierignore) \"**/*\"'",
+    "typecheck": "tsc --noEmit --pretty"
+  },
+  "dependencies": {
+    "@babel/core": "^7.21.0",
+    "@emotion/react": "^11.10.6",
+    "@emotion/styled": "^11.10.6",
+    "@fontsource/roboto": "^4.5.8",
+    "@mui/icons-material": "^5.11.11",
+    "@mui/lab": "5.0.0-alpha.122",
+    "@mui/material": "^5.11.12",
+    "@mui/system": "^5.11.12",
+    "@mui/x-date-pickers": "^5.0.20",
+    "dayjs": "^1.11.7",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@contag/eslint-config": "workspace:*",
+    "@contag/tsconfig": "workspace:*",
+    "@types/react": "^18.0.28",
+    "@types/testing-library__jest-dom": "^5.14.5",
+    "eslint": "^8.36.0",
+    "lint-staged": "^13.2.0",
+    "prettier": "^2.8.4",
+    "typescript": "^4.9.5"
+  },
+  "lint-staged": {
+    "**/*": "prettier --write --ignore-unknown",
+    "**/*.{ts,tsx}": [
+      "pnpm run lint:base"
+    ]
+  }
+}

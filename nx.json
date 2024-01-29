@@ -1,0 +1,82 @@
+{
+  "tasksRunnerOptions": {
+    "default": {
+      "runner": "@nrwl/nx-cloud",
+      "options": {
+        "cacheableOperations": [
+          "lint",
+          "generate-graphql-types",
+          "prettier",
+          "test",
+          "typecheck"
+        ],
+        "accessToken": "ZmUxNzIwODctMWQyOS00MTRmLTg2NGUtNWVhMmJkNzM4MjI3fHJlYWQtd3JpdGU="
+      }
+    }
+  },
+  "namedInputs": {
+    "graphql": [
+      "{workspaceRoot}/graphql-api/src/schema.graphql",
+      "{projectRoot}/src/mutations/**/*",
+      "{projectRoot}/src/queries/**/*"
+    ],
+    "noMarkdown": ["!{projectRoot}/**/*.md", "!{workspaceRoot}/**/*.md"],
+    "pnpm": [
+      "{projectRoot}/package.json",
+      "{workspaceRoot}/package.json",
+      "{workspaceRoot}/package-lock.yaml"
+    ],
+    "projectAll": ["{projectRoot}/**/*"],
+    "projectAllTS": ["{projectRoot}/**/*.ts", "{projectRoot}/**/*.tsx"]
+  },
+  "targetDefaults": {
+    "build": {
+      "inputs": [
+        "noMarkdown",
+        "^noMarkdown",
+        { "runtime": "cat .env || echo \"No env file found\"" },
+        "pnpm",
+        "^pnpm",
+        "projectAll"
+      ]
+    },
+    "dev": {
+      "inputs": [
+        "noMarkdown",
+        "^noMarkdown",
+        { "runtime": "cat .env || echo \"No env file found\"" },
+        "pnpm",
+        "^pnpm",
+        "projectAll"
+      ]
+    },
+    "generate-graphql-types": {
+      "inputs": [
+        "graphql",
+        {
+          "runtime": "cat .env || cat ./graphql-api/.env || cat ../graphql-api/.env || echo \"No env file found\""
+        },
+        "pnpm",
+        "^pnpm"
+      ],
+      "outputs": ["{projectRoot}/src/generated/*"]
+    },
+    "migrate:db": {
+      "inputs": ["pnpm", "^pnpm", "projectAll"],
+      "dependsOn": [{ "projects": "self", "target": "start:db" }]
+    },
+    "test": {
+      "dependsOn": [
+        { "projects": "self", "target": "generate-graphql-types" },
+        { "projects": "self", "target": "migrate:db" },
+        { "projects": "self", "target": "prisma:generate" }
+      ],
+      "inputs": ["noMarkdown", "^noMarkdown", "pnpm", "^pnpm", "projectAll"],
+      "outputs": ["{projectRoot}/coverage/**/*"]
+    },
+    "typecheck": {
+      "dependsOn": [{ "projects": "self", "target": "generate-graphql-types" }],
+      "inputs": ["noMarkdown", "^noMarkdown", "pnpm", "^pnpm", "projectAllTS"]
+    }
+  }
+}

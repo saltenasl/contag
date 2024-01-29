@@ -1,0 +1,438 @@
+scalar EmailAddress
+scalar DateTime
+scalar URL
+scalar JSONObject
+
+type Client {
+  id: ID!
+  name: String!
+}
+
+type PublicUser {
+  id: ID!
+  email: EmailAddress!
+  name: String
+  photoURL: String
+  active: Boolean
+}
+
+enum UserClientRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+type InviteToClient {
+  id: ID!
+  client: Client!
+  email: EmailAddress!
+  invitedBy: PublicUser!
+}
+
+type UsersClient {
+  id: ID!
+  name: String!
+  addedBy: PublicUser
+  role: UserClientRole!
+}
+
+type User {
+  id: ID!
+  email: EmailAddress!
+  name: String
+  photoURL: URL
+  clients: [UsersClient!]!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  clientInvites: [InviteToClient!]!
+}
+
+input CreateUserProfileInput {
+  name: String
+  photoURL: URL
+}
+
+enum ActionExpectationType {
+  ACTION_EXPECTED
+  ACTION_EXPECTED_FROM_YOU
+}
+
+type ActionExpectation {
+  type: ActionExpectationType!
+  completeUntil: DateTime
+  fulfilled: Boolean!
+}
+
+type Summary {
+  text: String!
+  richText: JSONObject
+  shouldReplaceOriginalItem: Boolean!
+}
+
+type Message {
+  id: ID!
+  parentId: ID
+  author: PublicUser!
+  text: String!
+  richText: JSONObject
+  to: [PublicUser!]!
+  sharedWith: [PublicUser!]!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  childCount: Int!
+  isAcceptedAnswer: Boolean
+  summary: Summary
+  attachments: [File!]
+  goals: [Goal!]
+  blocks: [Item!]
+  blockedBy: [Item!]
+}
+
+enum TaskStatus {
+  TODO
+  DONE
+}
+
+type Task {
+  id: ID!
+  parentId: ID
+  author: PublicUser!
+  text: String!
+  richText: JSONObject
+  to: [PublicUser!]!
+  sharedWith: [PublicUser!]!
+  status: TaskStatus!
+  updatedAt: DateTime!
+  createdAt: DateTime!
+  childCount: Int!
+  isAcceptedAnswer: Boolean
+  actionExpectation: ActionExpectation!
+  summary: Summary
+  attachments: [File!]
+  goals: [Goal!]
+  blocks: [Item!]
+  blockedBy: [Item!]
+}
+
+type AcceptedAnswer {
+  text: String!
+  richText: JSONObject
+}
+
+type Question {
+  id: ID!
+  parentId: ID
+  author: PublicUser!
+  text: String!
+  richText: JSONObject
+  acceptedAnswer: AcceptedAnswer
+  to: [PublicUser!]!
+  sharedWith: [PublicUser!]!
+  updatedAt: DateTime!
+  createdAt: DateTime!
+  childCount: Int!
+  isAcceptedAnswer: Boolean
+  actionExpectation: ActionExpectation!
+  summary: Summary
+  attachments: [File!]
+  goals: [Goal!]
+  blocks: [Item!]
+  blockedBy: [Item!]
+}
+
+type Info {
+  id: ID!
+  parentId: ID
+  author: PublicUser!
+  text: String!
+  richText: JSONObject
+  acknowledged: Boolean!
+  to: [PublicUser!]!
+  sharedWith: [PublicUser!]!
+  updatedAt: DateTime!
+  createdAt: DateTime!
+  childCount: Int!
+  isAcceptedAnswer: Boolean
+  actionExpectation: ActionExpectation!
+  summary: Summary
+  attachments: [File!]
+  goals: [Goal!]
+  blocks: [Item!]
+  blockedBy: [Item!]
+}
+
+enum GoalStatus {
+  TODO
+  DONE
+}
+
+type Goal {
+  id: ID!
+  parentId: ID
+  author: PublicUser!
+  text: String!
+  richText: JSONObject
+  to: [PublicUser!]!
+  sharedWith: [PublicUser!]!
+  goalStatus: GoalStatus! # This is not simply "status" due to a graphql limitation of not allowing different types returned by the same query to have properties with different types (and the query is the "items" query which returns both task and goal which would both have status with a different type)
+  updatedAt: DateTime!
+  createdAt: DateTime!
+  childCount: Int!
+  isAcceptedAnswer: Boolean
+  actionExpectation: ActionExpectation!
+  summary: Summary
+  attachments: [File!]
+  constituents: [Item!]
+  goals: [Goal!]
+  blocks: [Item!]
+  blockedBy: [Item!]
+}
+
+input ObjectReference {
+  id: ID!
+}
+
+input ActionExpectationInput {
+  completeUntil: DateTime
+}
+
+input Attachment {
+  id: ID!
+}
+
+input SendMessageInput {
+  text: String!
+  richText: JSONObject
+  shareWith: [ObjectReference!]
+  parentId: ID
+  attachments: [Attachment!]
+}
+
+input AmendMessageInput {
+  id: ID!
+  text: String
+  richText: JSONObject
+  sharedWith: [ObjectReference!]
+  attachments: [Attachment!]
+}
+
+input CreateTaskInput {
+  text: String!
+  richText: JSONObject
+  to: [ObjectReference!]
+  shareWith: [ObjectReference!]
+  parentId: ID
+  actionExpectation: ActionExpectationInput!
+  attachments: [Attachment!]
+}
+
+input AmendTaskInput {
+  id: ID!
+  to: [ObjectReference!]
+  sharedWith: [ObjectReference!]
+  status: TaskStatus
+  text: String
+  richText: JSONObject
+  actionExpectation: ActionExpectationInput
+  attachments: [Attachment!]
+}
+
+input CreateQuestionInput {
+  text: String!
+  richText: JSONObject
+  to: [ObjectReference!]
+  shareWith: [ObjectReference!]
+  parentId: ID
+  actionExpectation: ActionExpectationInput!
+  attachments: [Attachment!]
+}
+
+input AmendQuestionInput {
+  id: ID!
+  to: [ObjectReference!]
+  sharedWith: [ObjectReference!]
+  text: String
+  richText: JSONObject
+  actionExpectation: ActionExpectationInput
+  attachments: [Attachment!]
+}
+
+input CreateInfoInput {
+  text: String!
+  richText: JSONObject
+  to: [ObjectReference!]
+  shareWith: [ObjectReference!]
+  parentId: ID
+  actionExpectation: ActionExpectationInput!
+  attachments: [Attachment!]
+}
+
+input AmendInfoInput {
+  id: ID!
+  to: [ObjectReference!]
+  sharedWith: [ObjectReference!]
+  text: String
+  richText: JSONObject
+  acknowledged: Boolean
+  actionExpectation: ActionExpectationInput
+  attachments: [Attachment!]
+}
+
+input CreateGoalInput {
+  text: String!
+  richText: JSONObject
+  to: [ObjectReference!]
+  shareWith: [ObjectReference!]
+  parentId: ID
+  actionExpectation: ActionExpectationInput!
+  attachments: [Attachment!]
+}
+
+input AmendGoalInput {
+  id: ID!
+  text: String
+  richText: JSONObject
+  to: [ObjectReference!]
+  sharedWith: [ObjectReference!]
+  goalStatus: GoalStatus
+  actionExpectation: ActionExpectationInput
+  attachments: [Attachment!]
+}
+
+input InviteToClientInput {
+  clientId: ID!
+  email: EmailAddress!
+}
+
+type GenericMutationResponse {
+  success: Boolean!
+  message: String
+}
+
+input NestItemInput {
+  itemId: ID!
+  newParentId: ID!
+}
+
+union Item = Task | Message | Question | Info | Goal
+
+enum ItemType {
+  MESSAGE
+  TASK
+  QUESTION
+  INFO
+  GOAL
+}
+
+input ConvertItemInput {
+  itemId: ID!
+  to: ItemType!
+}
+
+type File {
+  id: ID!
+  filename: String!
+  contentType: String!
+  originalName: String!
+  size: Int!
+}
+
+input CreateFileInput {
+  contentType: String!
+  originalName: String!
+  size: Int!
+}
+
+enum ItemsSortType {
+  CREATED_AT
+  COMPLETE_UNTIL
+}
+
+enum ItemsSortOrder {
+  OLDEST_FIRST
+  NEWEST_FIRST
+}
+
+input ItemsSort {
+  type: ItemsSortType!
+  order: ItemsSortOrder!
+}
+
+input ItemTypeFilters {
+  message: Boolean
+  task: Boolean
+  question: Boolean
+  info: Boolean
+  goal: Boolean
+}
+
+input ItemsFilters {
+  parentId: ID
+  itemType: ItemTypeFilters
+  actionExpectation: ActionExpectationFiltersInput
+  search: String
+}
+
+input ActionExpectationFiltersInput {
+  todo: Boolean
+  done: Boolean
+  na: Boolean
+}
+
+input PublicUsersFilters {
+  search: String
+}
+
+type Query {
+  publicUsers(filters: PublicUsersFilters): [PublicUser!]!
+  item(id: ID!): Item
+  myProfile: User!
+  items(sort: ItemsSort!, filters: ItemsFilters!): [Item!]!
+}
+
+type Mutation {
+  sendMessage(input: SendMessageInput!): Message
+  amendMessage(input: AmendMessageInput!): Message
+  createTask(input: CreateTaskInput!): Task
+  amendTask(input: AmendTaskInput!): Task
+  inviteToClient(input: InviteToClientInput!): InviteToClient
+  acceptClientInvite(inviteId: ID!): UsersClient
+  declineClientInvite(inviteId: ID!): GenericMutationResponse
+  nestItem(input: NestItemInput!): GenericMutationResponse
+  convertItem(input: ConvertItemInput!): Item
+  createQuestion(input: CreateQuestionInput!): Question
+  amendQuestion(input: AmendQuestionInput!): Question
+  createInfo(input: CreateInfoInput!): Info
+  amendInfo(input: AmendInfoInput!): Info
+  createGoal(input: CreateGoalInput!): Goal
+  amendGoal(input: AmendGoalInput!): Goal
+  acceptAnswer(itemId: ID!): Item
+  summarizeItem(
+    itemId: ID!
+    text: String!
+    shouldReplaceOriginalItem: Boolean!
+    richText: JSONObject
+  ): Item
+  deleteItemSummary(itemId: ID!): Item
+  createFile(input: CreateFileInput!): File
+  updateGoalConstituents(
+    itemId: ID!
+    constituentsAdded: [ObjectReference!]!
+    constituentsRemoved: [ObjectReference!]!
+  ): Goal
+  updateItemGoals(
+    itemId: ID!
+    goalsAdded: [ObjectReference!]!
+    goalsRemoved: [ObjectReference!]!
+  ): Item
+  updateItemsBlocked(
+    itemId: ID!
+    itemsBlockedAdded: [ObjectReference!]!
+    itemsBlockedRemoved: [ObjectReference!]!
+  ): Item
+  updateItemIsBlockedBy(
+    itemId: ID!
+    blockedByAdded: [ObjectReference!]!
+    blockedByRemoved: [ObjectReference!]!
+  ): Item
+}

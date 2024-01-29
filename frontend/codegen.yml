@@ -1,0 +1,15 @@
+schema: './node_modules/@contag/graphql-api/src/schema.graphql'
+documents:
+  - 'src/**/*.ts'
+generates:
+  './src/generated/':
+    preset: 'client'
+    plugins: []
+    presetConfig:
+      gqlTagName: 'gql'
+    config:
+      scalars:
+        EmailAddress: 'string'
+        DateTime: 'string'
+        URL: 'string'
+        JSONObject: 'Object'

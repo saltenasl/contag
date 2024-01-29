@@ -1,0 +1,166 @@
+name: CI
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }} # Cancels only on PRs as head is only on PRs and fallback is run id which is always unique. Docs: https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-a-fallback-value
+  cancel-in-progress: true
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+jobs:
+  lint-test-typecheck-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: 'read'
+      contents: 'write'
+      pull-requests: write
+    steps:
+      # Root
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.BENJAMINSPAT }} # Required for write on bump to work, token will expire in Jan 2024.
+
+      # Bump version in package.json as all deployed together, for now this only bumps root file.
+      # In future different path filters using https://github.com/dorny/paths-filter can update each version separately.
+      - name: 'cat package.json'
+        if: "${{ !contains(github.event.head_commit.message, 'ci: ') && github.event_name == 'push' }}"
+        run: cat ./package.json
+
+      - name: 'Bump version'
+        id: version-bump
+        if: "${{ !contains(github.event.head_commit.message, 'ci: ') && github.event_name == 'push' }}"
+        uses: 'phips28/gh-action-bump-version@master'
+        env:
+          GITHUB_TOKEN: ${{ secrets.BENJAMINSPAT }}
+
+      - name: 'cat package.json'
+        if: "${{ !contains(github.event.head_commit.message, 'ci: ') && github.event_name == 'push' }}"
+        run: cat ./package.json
+
+      - name: 'Output Step'
+        if: "${{ !contains(github.event.head_commit.message, 'ci: ') && github.event_name == 'push' }}"
+        env:
+          NEW_TAG: ${{ steps.version-bump.outputs.newTag }}
+        run: echo "new tag $NEW_TAG"
+
+      # CI
+      - name: Use Node 18
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - uses: pnpm/action-setup@v2
+        name: Install pnpm
+        id: pnpm-install
+        with:
+          version: 8.0.0
+          run_install: false
+
+      - name: Set nx cache
+        uses: nrwl/nx-set-shas@v3
+
+      - name: Output nx base and head vars
+        run: |
+          echo "BASE: ${{ env.NX_BASE }}"
+          echo "HEAD: ${{ env.NX_HEAD }}"
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v3
+        name: Setup pnpm cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm i --frozen-lockfile
+
+      # Workspaces
+      - name: Run lint (on PR)
+        if: github.event_name == 'pull_request'
+        run: |
+          pnpm lint:affected
+          pnpm prettier:affected
+
+      - name: Run lint (on main branch)
+        if: github.event_name != 'pull_request'
+        run: |
+          pnpm lint:skip-cache
+          pnpm prettier:skip-cache
+
+      - name: Run typecheck (on PR)
+        if: github.event_name == 'pull_request'
+        run: pnpm typecheck:affected
+
+      - name: Run typecheck (on main branch)
+        if: github.event_name != 'pull_request'
+        run: pnpm typecheck:skip-cache
+
+      - name: Create .env for graphql-api
+        run: |
+          cd graphql-api
+          pnpm run create-env-file
+
+      - name: Create .env for frontend
+        run: |
+          cd frontend
+          touch .env
+          echo FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY}} >> .env
+          echo FIREBASE_AUTH_DOMAIN=${{ secrets.FIREBASE_AUTH_DOMAIN }} >> .env
+          echo FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }} >> .env
+          echo FIREBASE_STORAGE_BUCKET=${{ secrets.FIREBASE_STORAGE_BUCKET }} >> .env
+          echo GRAPHQL_API_URL=${{ secrets.GRAPHQL_API_URL }} >> .env
+
+      - name: Run tests (on PR)
+        if: github.event_name == 'pull_request'
+        # run: pnpm test:affected # This doesn't allow coverage uploading thus commented for now
+        run: pnpm test
+
+      - name: Run tests (on main branch)
+        if: github.event_name != 'pull_request'
+        run: pnpm test:skip-cache
+
+      - name: Upload coverage
+        uses: paambaati/codeclimate-action@v3.2.0
+        env:
+          CC_TEST_REPORTER_ID: 8e68cbf0a0602bc1673bc82cfa4d2346b2575b3545fd8702d6435d2dc6f3a70d
+        with:
+          # debug: true
+          coverageLocations: |
+            ${{github.workspace}}/*/coverage/lcov.info:lcov
+
+      - name: Build frontend and server (on PR)
+        if: github.event_name == 'pull_request'
+        run: pnpm build:affected
+
+      - name: Build frontend and server (on main branch)
+        if: github.event_name != 'pull_request'
+        run: pnpm build:skip-cache
+
+      # Upload sourcemaps
+      - name: Upload sourcemaps
+        working-directory: frontend
+        if: "${{ contains(github.event.head_commit.message, 'ci: ') && github.event_name == 'push' }}"
+        env:
+          DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
+        run: |
+          pnpm sourcemap-upload
+
+      - name: Autoupdate PRs
+        if: "${{ contains(github.event.head_commit.message, 'ci: ') && github.event_name == 'push' }}"
+        uses: docker://chinthakagodawita/autoupdate-action:v1
+        env:
+          GITHUB_TOKEN: '${{ secrets.BENJAMINSPAT }}' # Required for commits on PRs to trigger CI (GHA won't trigger using the same token to avoid recursive triggering)
+          MERGE_CONFLICT_ACTION: 'ignore'

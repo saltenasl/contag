@@ -1,0 +1,4 @@
+{
+  "extends": "@contag/tsconfig/tsconfig.react.json",
+  "include": ["src"]
+}

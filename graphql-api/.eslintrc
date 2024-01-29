@@ -1,0 +1,22 @@
+{
+  "extends": "@contag/eslint-config",
+  "rules": {
+    "@typescript-eslint/consistent-type-imports": [
+      // This rule is enabled because graphql-codegen creates import without type keyword
+      // Because of that the compilerOptions.importsNotUsedAsValues in tsconfig is not set to error
+      // And this rule is used as a replacement for that.
+      "error",
+      { "prefer": "type-imports" }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["./src/generated/*.ts"],
+      "rules": {
+        "@typescript-eslint/ban-types": "off",
+        "@typescript-eslint/consistent-type-imports": "off",
+        "@typescript-eslint/no-explicit-any": "off"
+      }
+    }
+  ]
+}

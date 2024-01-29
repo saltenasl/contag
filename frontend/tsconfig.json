@@ -1,0 +1,11 @@
+{
+  "extends": "@contag/tsconfig/tsconfig.react.json",
+  "include": ["src", "test"],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "src/*": ["./src/*"]
+    },
+    "sourceMap": true
+  }
+}

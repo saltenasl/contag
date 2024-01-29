@@ -1,0 +1,69 @@
+{
+  "cSpell.words": [
+    "appsec",
+    "Asana",
+    "automations",
+    "calendly",
+    "combobox",
+    "commitlint",
+    "contag",
+    "Contag",
+    "decacorns",
+    "Demotivation",
+    "dockerized",
+    "dont",
+    "esbuild",
+    "firestore",
+    "FOMO",
+    "Freemium",
+    "giphy",
+    "Grammarly",
+    "Heatmaps",
+    "knowledgebase",
+    "lcov",
+    "lifecycles",
+    "Norming",
+    "nrwl",
+    "pnpm",
+    "presenteeism",
+    "RASCI",
+    "remarketing",
+    "Scaleup",
+    "signup",
+    "signups",
+    "testid",
+    "TLDR",
+    "typecheck",
+    "unscalable",
+    "upsell",
+    "userbase"
+  ],
+  "editor.tabSize": 2,
+
+  "files.exclude": {
+    "**/node_modules": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/coverage": true
+  },
+
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "[prisma]": {
+    "editor.defaultFormatter": "Prisma.prisma"
+  },
+
+  "eslint.alwaysShowStatus": true,
+  "eslint.workingDirectories": [{ "mode": "auto" }],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+
+  "files.autoSave": "onFocusChange",
+
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "typescript.referencesCodeLens.enabled": true,
+  "javascript.inlayHints.enumMemberValues.enabled": true
+}

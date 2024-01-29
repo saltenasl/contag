@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+git pull --rebase
+pnpm i
+pnpm lint:affected --base=origin/main
+pnpm prettier:affected --base=origin/main
+pnpm typecheck:affected --base=origin/main
+pnpm test:affected --base=origin/main

@@ -1,0 +1,11 @@
+{
+  "extends": "@contag/tsconfig",
+  "exclude": ["./esbuild.js", "./dist", "./src/generated", "./coverage"],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "src/*": ["./src/*"]
+    },
+    "importsNotUsedAsValues": "remove"
+  }
+}

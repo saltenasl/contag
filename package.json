@@ -1,0 +1,59 @@
+{
+  "name": "contag-workspace",
+  "version": "1.29.0",
+  "engines": {
+    "node": "^18.13.0",
+    "pnpm": "^8.0.0"
+  },
+  "description": "The workspace for contag monorepo",
+  "workspaces": [
+    "eslint-config",
+    "graphql-api",
+    "package-template",
+    "tsconfig"
+  ],
+  "scripts": {
+    "build:affected": "pnpm nx affected --target=build --parallel=4",
+    "build": "pnpm nx run-many --target=build --parallel=4",
+    "build:skip-cache": "pnpm nx run-many --target=build --parallel=4 --skip-nx-cache",
+    "dev": "pnpm nx run-many --target=dev --parallel=4",
+    "dev:skip-cache": "pnpm nx run-many --target=dev --parallel=4 --skip-nx-cache",
+    "dev:preview": "pnpm nx run-many --target=start --parallel=4",
+    "dev:preview:skip-cache": "pnpm nx run-many --target=start --parallel=4 --skip-nx-cache",
+    "lint:affected": "pnpm nx affected --target=lint --parallel=4",
+    "lint": "pnpm nx run-many --target=lint --parallel=4",
+    "lint:skip-cache": "pnpm nx run-many --target=lint --parallel=4 --skip-nx-cache",
+    "prepare": "node -e \"try { require('husky').install() } catch (e) {if (e.code !== 'MODULE_NOT_FOUND') throw e}\"",
+    "prettier:affected": "prettier --check --ignore-unknown \"./*\" && pnpm nx affected --target=prettier --parallel=4",
+    "prettier": "prettier --check --ignore-unknown \"./*\" && pnpm nx run-many --target=prettier --parallel=4",
+    "prettier:skip-cache": "prettier --check --ignore-unknown \"./*\" && pnpm nx run-many --target=prettier --parallel=4 --skip-nx-cache",
+    "prettier:fix": "prettier --write --ignore-unknown \"**/*\"",
+    "smoke": "pnpm i && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "smoke:skip-cache": "pnpm i && pnpm lint:skip-cache && pnpm typecheck:skip-cache && pnpm test:skip-cache && pnpm build:skip-cache",
+    "test:affected": "pnpm nx affected --target=test --parallel=1",
+    "test": "pnpm nx run-many --target=test --parallel=1",
+    "test:skip-cache": "pnpm nx run-many --target=test --parallel=1 --skip-nx-cache",
+    "typecheck:affected": "pnpm nx affected --target=typecheck --parallel-4",
+    "typecheck": "pnpm nx run-many --target=typecheck --parallel=4",
+    "typecheck:skip-cache": "pnpm nx run-many --target=typecheck --parallel=4 --skip-nx-cache"
+  },
+  "author": "",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@commitlint/cli": "^17.4.4",
+    "@commitlint/config-conventional": "^17.4.4",
+    "@types/node": "^18.15.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^13.2.0",
+    "nx": "^15.8.6",
+    "prettier": "^2.8.4"
+  },
+  "dependencies": {
+    "@datadog/datadog-ci": "^2.5.1",
+    "@nrwl/nx-cloud": "^15.2.1",
+    "pnpm": "^8.0.0"
+  },
+  "lint-staged": {
+    "**/*": "prettier --write --ignore-unknown"
+  }
+}

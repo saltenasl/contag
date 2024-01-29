@@ -1,0 +1,14 @@
+{
+  "recommendations": [
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "ms-azuretools.vscode-docker",
+    "yzhang.markdown-all-in-one",
+    "prisma.prisma",
+    "graphql.vscode-graphql",
+    "jebbs.plantuml",
+    "marp-team.marp-vscode",
+    "cschleiden.vscode-github-actions",
+    "nrwl.angular-console"
+  ]
+}

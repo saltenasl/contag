@@ -1,0 +1,238 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["orderByNulls", "fullTextSearch"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                          Int             @id @default(autoincrement())
+  email                       String          @unique
+  name                        String?
+  photoURL                    String?
+  createdAt                   DateTime        @default(now())
+  updatedAt                   DateTime        @updatedAt
+  recipient                   Recipient[]
+  sentClientInvites           ClientInvites[]
+  userClients                 UserClient[]    @relation("UserClients")
+  usersAddedToClients         UserClient[]    @relation("UserClientAddedBy")
+  authoredItems               Item[]
+  usersFeedActivity           FeedActivity[]  @relation("usersFeedActivity")
+  feedActivitiesInvolvingUser FeedActivity[]  @relation("feedActivitiesInvolvingUser")
+  Summary                     Summary[]
+  File                        File[]
+}
+
+enum ClientRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum TaskStatus {
+  TODO
+  DONE
+}
+
+// enum action-type {definitive answer, boolean, ideas, opinion, task completion etc} - should we have subtypes here? e.g. response types is a varyng subtype that covers the initial use cases except task due dates
+// enum roles (RASCI: responsible, accountable, support, consulted, informed) - this will be on items and be used in some workflows but most imminently be used to show users the most relevant information. This along with the future related data models will be our way of iterating to subscriptions to various topics
+// enum privacy-level: private to receipients, private to recipients and audience, Client only (visible to every UserClient), MultiClient, Public (not useful atm but will be for generalized entities in a knowledge graph)
+model UserClient {
+  id            Int        @id @default(autoincrement())
+  user          User       @relation(fields: [userId], references: [id], name: "UserClients")
+  client        Client     @relation(fields: [clientId], references: [id])
+  userId        Int
+  clientId      Int
+  role          ClientRole
+  addedBy       User?      @relation(fields: [addedByUserId], references: [id], name: "UserClientAddedBy")
+  addedByUserId Int?
+}
+
+model Client {
+  // TODO: I would rename this to ClientOrganization - NB this is not necessarily a company, it could be any org that's informal, and invidivual or a department of a company (allowing many subs)
+  // TODO: we'll need to have settings on or related to this e.g. whether their Users within it can publish content they author to other ClientOrganizations (off, with permission, on)
+  id                Int             @id @default(autoincrement())
+  name              String
+  userClientInvites ClientInvites[]
+  userClients       UserClient[]
+}
+
+model ClientInvites {
+  id              Int    @id @default(autoincrement())
+  email           String
+  client          Client @relation(fields: [clientId], references: [id])
+  clientId        Int
+  createdBy       User   @relation(fields: [createdByUserId], references: [id])
+  createdByUserId Int
+
+  @@unique([email, clientId])
+}
+
+model Message {
+  id                   Int                      @id @default(autoincrement())
+  text                 String
+  richText             Json?
+  updatedAt            DateTime                 @default(now()) @updatedAt
+  item                 Item?
+  fullTextSearchColumn Unsupported("tsvector")? @default(dbgenerated("to_tsvector('english'::regconfig, text)"))
+
+  @@index([fullTextSearchColumn], type: Gin)
+}
+
+model Task {
+  id                   Int                      @id @default(autoincrement())
+  // Will need title vs body, we can convert description to title
+  description          String
+  richText             Json?
+  status               TaskStatus               @default(TODO)
+  updatedAt            DateTime                 @default(now()) @updatedAt
+  item                 Item?
+  fullTextSearchColumn Unsupported("tsvector")? @default(dbgenerated("to_tsvector('english'::regconfig, description)"))
+
+  @@index([fullTextSearchColumn], type: Gin)
+}
+
+model Question {
+  id                   Int                      @id @default(autoincrement())
+  text                 String
+  richText             Json?
+  updatedAt            DateTime                 @default(now()) @updatedAt
+  item                 Item?
+  answer               Item?                    @relation(fields: [answerId], references: [id], name: "item-as-answer-to-a-question")
+  answerId             Int?                     @unique
+  fullTextSearchColumn Unsupported("tsvector")? @default(dbgenerated("to_tsvector('english'::regconfig, text)"))
+
+  @@index([fullTextSearchColumn], type: Gin)
+}
+
+model Info {
+  id                   Int                      @id @default(autoincrement())
+  text                 String
+  richText             Json?
+  updatedAt            DateTime                 @default(now()) @updatedAt
+  acknowledged         Boolean                  @default(false)
+  item                 Item?
+  fullTextSearchColumn Unsupported("tsvector")? @default(dbgenerated("to_tsvector('english'::regconfig, text)"))
+
+  @@index([fullTextSearchColumn], type: Gin)
+}
+
+enum GoalStatus {
+  TODO
+  DONE
+}
+
+model Goal {
+  id                   Int                      @id @default(autoincrement())
+  title                String
+  richText             Json?
+  status               GoalStatus               @default(TODO)
+  updatedAt            DateTime                 @default(now()) @updatedAt
+  item                 Item?                    @relation("item-goal-one-to-one")
+  fullTextSearchColumn Unsupported("tsvector")? @default(dbgenerated("to_tsvector('english'::regconfig, title)"))
+  constituents         Item[]                   @relation("goal-constituents")
+
+  @@index([fullTextSearchColumn], type: Gin)
+}
+
+// Model for a group (arbitrary array of Users or other groups), relates to both recipient and audience. Should have an optional name field for reusability
+
+// TODO: the way we conceive of recipient vs audience is a little unclear and definitely insufficient. Atm it is the equivalent of "to" and "cc" in an email.
+// We should have 3 levels. "recipients (directed at/to)", "audience" and "privacy/exposure" (see enum privacy-level).
+
+model Recipient {
+  id                Int   @id @default(autoincrement())
+  user              User  @relation(fields: [userId], references: [id])
+  userId            Int
+  sharedWithItem    Item? @relation(fields: [sharedWithItemId], references: [id], name: "item-shared-with-recipients")
+  sharedWithItemId  Int?
+  addressedToItem   Item? @relation(fields: [addressedToItemId], references: [id], name: "item-addressed-to-recipients")
+  addressedToItemId Int?
+}
+
+model Item {
+  id                Int                @id @default(autoincrement())
+  author            User               @relation(fields: [authorId], references: [id])
+  authorId          Int
+  parent            Item?              @relation(fields: [parentId], references: [id], name: "nested-item")
+  children          Item[]             @relation("nested-item")
+  parentId          Int?
+  message           Message?           @relation(fields: [messageId], references: [id])
+  messageId         Int?               @unique
+  task              Task?              @relation(fields: [taskId], references: [id])
+  taskId            Int?               @unique
+  question          Question?          @relation(fields: [questionId], references: [id])
+  questionId        Int?               @unique
+  info              Info?              @relation(fields: [infoId], references: [id])
+  infoId            Int?               @unique
+  goal              Goal?              @relation(fields: [goalId], references: [id], name: "item-goal-one-to-one")
+  goalId            Int?               @unique
+  createdAt         DateTime           @default(now())
+  FeedActivity      FeedActivity[]
+  sharedWith        Recipient[]        @relation(name: "item-shared-with-recipients")
+  addressedTo       Recipient[]        @relation(name: "item-addressed-to-recipients")
+  answerFor         Question?          @relation(name: "item-as-answer-to-a-question")
+  actionExpectation ActionExpectation?
+  summary           Summary?
+  attachments       File[]
+  goals             Goal[]             @relation("goal-constituents")
+  blocks            Item[]             @relation("item-blocks-is-blocked-by")
+  isBlockedBy       Item[]             @relation("item-blocks-is-blocked-by")
+}
+
+model ActionExpectation {
+  id            Int       @id @default(autoincrement())
+  completeUntil DateTime?
+  item          Item      @relation(fields: [itemId], references: [id])
+  itemId        Int       @unique
+  fulfilled     Boolean   @default(false)
+}
+
+model Summary {
+  id                        Int                      @id @default(autoincrement())
+  addedBy                   User                     @relation(fields: [addedById], references: [id])
+  addedById                 Int
+  item                      Item                     @relation(fields: [itemId], references: [id])
+  itemId                    Int                      @unique
+  text                      String
+  richText                  Json?
+  shouldReplaceOriginalItem Boolean
+  createdAt                 DateTime                 @default(now())
+  updatedAt                 DateTime                 @updatedAt
+  fullTextSearchColumn      Unsupported("tsvector")? @default(dbgenerated("to_tsvector('english'::regconfig, text)"))
+
+  @@index([fullTextSearchColumn], type: Gin)
+}
+
+model FeedActivity {
+  id                 Int      @id @default(autoincrement())
+  user               User     @relation(fields: [userId], references: [id], name: "usersFeedActivity")
+  parentUser         User?    @relation(fields: [parentUserId], references: [id], name: "feedActivitiesInvolvingUser")
+  parentItem         Item?    @relation(fields: [parentItemId], references: [id])
+  userId             Int
+  parentUserId       Int?
+  parentItemId       Int?
+  lastActivity       DateTime @updatedAt
+  fieldToForceUpdate Int?
+
+  @@unique([userId, parentItemId, parentUserId])
+}
+
+model File {
+  id           Int     @id @default(autoincrement())
+  filename     String  @default(uuid()) @db.Uuid
+  extension    String?
+  originalName String
+  contentType  String
+  size         Int
+  createdBy    User    @relation(fields: [createdById], references: [id])
+  createdById  Int
+  Item         Item?   @relation(fields: [itemId], references: [id])
+  itemId       Int?
+}
