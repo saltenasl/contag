@@ -1,6 +1,6 @@
 # About
 
-This repository contains a discontinued WIP MVP that was being built by [@benjaminhobbs](https://github.com/benjaminhobbs) (also the author of the idea) and [@saltenasl](https://github.com/saltenasl). [@benjaminhobbs](https://github.com/benjaminhobbs) worked mostly on the developer experience (github actions, heroku configs, nx config and similar) while [@saltenasl](https://github.com/saltenasl) was working on the rest.
+This repository contains a discontinued WIP MVP that was being built by [@jamesbhobbs](https://github.com/jamesbhobbs) (also the author of the idea) and [@saltenasl](https://github.com/saltenasl). [@jamesbhobbs](https://github.com/jamesbhobbs) worked mostly on the developer experience (github actions, heroku configs, nx config and similar) while [@saltenasl](https://github.com/saltenasl) was working on the rest.
 
 ## Rationale for making it public
 
